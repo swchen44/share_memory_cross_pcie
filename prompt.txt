@@ -1,0 +1,15 @@
+
+# 用英文思考，繁體中文回答，生成不同檔案，比如marakdown, plantuml, mermaid, c 代碼，以符合以下需求
+# 照原來檔案修改
+# 請設計以下功能，使用markdown 說明設計, 再加上plantuml 畫流程圖，時序圖，再加上mermaid的畫流程圖，時序圖
+## 1. 功能為PCIE slave 要data給PCIE host, 利用DRAM memory 佔放buffer
+## 2. 有一個DRAM memory buffer，可以被host 讀寫, 也可以被PCIE slave 讀寫, 
+## 3. 當memory 被 PCIE slave 寫資資料後， 更新write pointer，PCIE slave利用PCIE MSI interrupt 通知host, 
+## 4. 當host 讀DRAM memory buffer 後，判斷read pointer 和 write pointer是否有資料， 並更新read potiner，host 利用CCIF interrupt 通知slave
+## 5. Slave 若還有資料，就繼續上面第3步驟
+# 使用clang, asan, gtest 驗證此c代碼module，加入Makefile
+# 使用 BSD license
+# 寫一個 emi_writer.c 模組 c code，可模擬在pcie slave執行
+# 寫一個 emi_reader.c 模組 c code，可模擬在pcie host執行
+# 寫一個 main.c，使用emi_writter, emi_reader 模組, 模擬以上功能
+# 修改 README.md, 內容像是一般open source 在github 的說明
