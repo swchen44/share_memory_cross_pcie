@@ -1,0 +1,13 @@
+graph LR
+    A[PCIE Slave Writes Data to DRAM Buffer] --> B(Update Write Pointer)
+    B --> C{PCIE Slave Sends MSI Interrupt to Host}
+    C --> D[Host Receives MSI Interrupt]
+    D --> E(Host Reads Data from DRAM Buffer)
+    E --> F(Update Read Pointer)
+    F --> G{Host Checks for More Data (Read Pointer != Write Pointer)}
+    G -- Yes --> H(Host Sends CCIF Interrupt to Slave)
+    H --> I[Slave Receives CCIF Interrupt]
+    I --> J{Slave Checks for More Data to Send}
+    J -- Yes --> A
+    J -- No --> K((Stop))
+    G -- No --> K

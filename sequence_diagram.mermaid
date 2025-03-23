@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant PCIE Slave as Slave
+    participant PCIE Host as Host
+    participant DRAM Memory
+
+    Slave->>DRAM Memory: Write Data
+    Slave->>Slave: Update Write Pointer
+    Slave->>Host: MSI Interrupt
+    activate Host
+    Host->>DRAM Memory: Read Data
+    Host->>Host: Update Read Pointer
+    Host->>Host: Check for More Data
+    alt More Data
+        Host->>Slave: CCIF Interrupt
+        deactivate Host
+        Slave->>Slave: Check for More Data to Send
+        alt More Data to Send
+            Slave->>DRAM Memory: Write Data
+        else No More Data to Send
+            stop
+        end
+    else No More Data
+        deactivate Host
+        stop
+    end
