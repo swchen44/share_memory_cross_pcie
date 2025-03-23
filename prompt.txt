@@ -1,16 +1,22 @@
 
-# 用英文思考，繁體中文回答，生成不同檔案，比如marakdown, plantuml, mermaid, c 代碼，以符合以下需求
-# 照原來檔案修改
-# 請設計以下功能，使用markdown 說明設計, 再加上plantuml 畫流程圖，時序圖，再加上mermaid的畫流程圖，時序圖
+# 用英文思考，繁體中文回答，生成不同檔案，比如marakdown, plantuml, html with mermaid, c 代碼，以符合以下需求
+# 照原儘量來檔案修改
+# 使用 BSD license
+# 請設計以下功能，使用markdown 說明設計, plantuml 畫流程圖，時序圖，html with mermaid的畫流程圖，時序圖
 ## 1. 功能為PCIE slave 要data給PCIE host, 利用DRAM memory 佔放buffer
 ## 2. 有一個DRAM memory buffer，可以被host 讀寫, 也可以被PCIE slave 讀寫, 
 ## 3. 當memory 被 PCIE slave 寫資資料後， 更新write pointer，PCIE slave利用PCIE MSI interrupt 通知host, 
 ## 4. 當host 讀DRAM memory buffer 後，判斷read pointer 和 write pointer是否有資料， 並更新read potiner，host 利用CCIF interrupt 通知slave
 ## 5. Slave 若還有資料，就繼續上面第3步驟
-# 使用 BSD license
-# 寫一個 emi_writer.c 模組 c code，可模擬在pcie slave執行, buffer address 由caller 提供, 提供header 給caller 使用public interface, 此module為pure module，提供write api 可write多個單位，單位是define 定義預設4096 bytes, 一定是2的冪次
-# 寫一個 emi_reader.c 模組 c code，可模擬在pcie host執行, buffer address 由caller 提供, 提供header 給caller 使用public interface,  此module為pure module，提供read data 可read多個單位, 單位是define, 定義預設4096 bytes, 一定是2的冪次
-# 寫一個 main.c，給一個global buffer, emi_writter, emi_reader共用此global buffer，把address傳給 emi_writter, emi_reader 模組, 模擬以上功能
-# 加入Makefile, 使用clang, asan, 和 gtest , 可compile和unit test 以上module
-# 修改 README.md, 內容像是一般open source 在github 的說明
-# 所有global symbol, define, struct, enum, preprocessor 都要加上module name 作prefix, module name 即為檔名
+# 模組化
+## 模組的檔名是模組名稱
+## 模組有public header, 提供caller include
+## 模緛人的所有global symbol, define, struct, enum, preprocessor 都要加上module name 作prefix, 
+## 模組會提供 有模組的初始化init api, 和uninit api
+## 模組會提doxygen 格式註解，以產生文件
+# 實作參考，可額外再加其它實作，符合以上需求
+## 寫一個 emi_writer.c 模組 c code，可模擬在pcie slave執行, buffer address 由caller 提供, 此module為pure module，提供write byte 和block api 可write多個block，block大小是define 定義預設4096 bytes, 一定是2的冪次
+## 寫一個 emi_reader.c 模組 c code，可模擬在pcie host執行, buffer address 由caller 提供, 此module為pure module，提供read byte和block 可read多個block, block大小是define, 定義預設4096 bytes, 一定是2的冪次
+## 寫一個 main.c，給一個global buffer, 大小為32 kbytes, emi_writter, emi_reader共用此global buffer，把address傳給 emi_writter, emi_reader 模組, 模擬以上功能
+## 加入Makefile, 使用clang, asan, 和 gtest , 可compile和unit test 以上module
+## 修改 README.md, 內容像是一般open source 在github 的說明
