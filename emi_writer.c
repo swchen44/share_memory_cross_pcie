@@ -45,7 +45,7 @@ void emi_writer_init_dram_buffer() {
 bool emi_writer_write_data_to_dram(uint8_t data) {
     // Check if the buffer is full
     if ((emi_writer_shared_dram.write_ptr + 1) % DRAM_BUFFER_SIZE == emi_writer_shared_dram.read_ptr) {
-        printf("DRAM buffer is full!\n");
+        fprintf(stderr, "DRAM buffer is full!\n");
         return false;
     }
 
@@ -106,7 +106,7 @@ int emi_writer_main() {
             receive_ccif_interrupt();
         } else {
             // Handle buffer full condition
-            printf("Failed to write data %d to DRAM buffer (buffer full).\n", data);
+            fprintf(stderr, "Failed to write data %d to DRAM buffer (buffer full).\n", data);
         }
     }
 

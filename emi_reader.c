@@ -42,8 +42,8 @@ void emi_reader_init_dram_buffer() {
 bool emi_reader_read_data_from_dram(uint8_t *data) {
     // Check if the buffer is empty
     if (emi_writer_shared_dram.read_ptr == emi_writer_shared_dram.write_ptr) {
-        printf("DRAM buffer is empty!\n");
-        return false; // Buffer is empty
+        fprintf(stderr, "DRAM buffer is empty!\n");
+        return false;
     }
 
     // Read data from the buffer
