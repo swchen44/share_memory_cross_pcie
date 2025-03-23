@@ -3,11 +3,11 @@
 # 照原儘量來檔案修改
 # 使用 BSD license
 # 請設計以下功能，使用markdown 說明設計, plantuml 畫流程圖，時序圖，html with mermaid的畫流程圖，時序圖
-## 1. 功能為PCIE slave 要data給PCIE host, 利用DRAM memory 佔放buffer
-## 2. 有一個DRAM memory buffer，可以被host 讀寫, 也可以被PCIE slave 讀寫, 
-## 3. 當memory 被 PCIE slave 寫資資料後， 更新write pointer，PCIE slave利用PCIE MSI interrupt 通知host, 
-## 4. 當host 讀DRAM memory buffer 後，判斷read pointer 和 write pointer是否有資料， 並更新read potiner，host 利用CCIF interrupt 通知slave
-## 5. Slave 若還有資料，就繼續上面第3步驟
+## 1. 功能為emi writer 要data給emi reader, 利用DRAM memory 佔放buffer
+## 2. 有一個DRAM memory buffer，可以被hemi reader 讀, 也可以被emi writer 寫, 
+## 3. 當memory 被 emi writer  寫資資料後， 更新write pointer，emi writer利用PCIE MSI interrupt emi reader, 
+## 4. 當emi reader 收到interrupt, 讀write pointer 和 read pointer 從DRAM memory buffer 後，判斷read pointer 和 write pointer是否有資料，全部讀取後，並更新read potiner，host 利用CCIF interrupt 通知 emi writer
+## 5. emi writer 若還有新進資料資料，就繼續上面第3步驟
 # 模組化
 ## 模組的檔名是模組名稱
 ## 模組有public header, 提供caller include
@@ -20,3 +20,4 @@
 ## 寫一個 main.c，給一個global buffer, 大小為32 kbytes, emi_writter, emi_reader共用此global buffer，把address傳給 emi_writter, emi_reader 模組, 模擬以上功能
 ## 加入Makefile, 使用clang, asan, 和 gtest , 可compile和unit test 以上module
 ## 修改 README.md, 內容像是一般open source 在github 的說明
+## make test 需要pass

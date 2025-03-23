@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>EMI System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.css">
+</head>
+<body>
+  <h1>EMI System</h1>
+
+  <h2>Flowchart</h2>
+  <div class="mermaid">
+    graph TD
+        A[Start] --> B{More data?};
+        B -- Yes --> C[Write data to DRAM buffer];
+        C --> D[Update write pointer];
+        D --> E[Send MSI interrupt to host];
+        E --> F[Receive CCIF interrupt from host];
+        F --> B;
+        B -- No --> G[Stop];
+  </div>
+
+  <h2>Sequence Diagram</h2>
+  <div class="mermaid">
+    sequenceDiagram
+        participant EMIWriter
+        participant DRAMBuffer
+        participant PCIEHost
+
+        EMIWriter->>DRAMBuffer: Initialize DRAM buffer
+        loop More data
+            EMIWriter->>DRAMBuffer: Write data
+            DRAMBuffer-->>EMIWriter: Update write pointer
+            EMIWriter->>PCIEHost: Send MSI interrupt
+            PCIEHost-->>EMIWriter: Receive CCIF interrupt
+        end
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+</body>
+</html>

@@ -6,9 +6,9 @@ This project demonstrates a system for transferring data from a PCIE slave devic
 
 The system consists of the following components:
 
-*   **PCIE Slave (emi\_writer.c):** Writes data to the DRAM memory buffer and notifies the host via PCIE MSI interrupt.
-*   **PCIE Host (emi\_reader.c):** Reads data from the DRAM memory buffer, updates the read pointer, and notifies the slave via CCIF interrupt.
-*   **DRAM Memory Buffer:** A shared memory region accessible by both the PCIE slave and the PCIE host.
+*   **emi writer (emi\_writer.c):** Writes data to the DRAM memory buffer and notifies the emi reader via PCIE MSI interrupt.
+*   **emi reader (emi\_reader.c):** Reads data from the DRAM memory buffer, updates the read pointer, and notifies the emi writer via CCIF interrupt.
+*   **DRAM Memory Buffer:** A shared memory region accessible by both the emi writer and the emi reader.
 
 ## Design
 
