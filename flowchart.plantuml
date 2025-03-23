@@ -1,24 +1,15 @@
 @startuml
-title PCIE Slave to Host Data Transfer Flowchart
+title EMI Writer Flowchart
 
 start
-:PCIE Slave Writes Data to DRAM Buffer;
-:Update Write Pointer;
-:PCIE Slave Sends MSI Interrupt to Host;
--> Host Receives MSI Interrupt;
-:Host Reads Data from DRAM Buffer;
-:Update Read Pointer;
-:Host Checks for More Data (Read Pointer != Write Pointer);
-alt More Data Available
-    :Host Sends CCIF Interrupt to Slave;
-    -> Slave Receives CCIF Interrupt;
-    :Slave Checks for More Data to Send;
-    alt More Data to Send
-        goto start
-    else No More Data to Send
-        stop
-    end
-else No More Data Available
-    stop
-end
+:Initialize DRAM buffer;
+:Check if there is more data to send;
+while (More data?)
+  :Write data to DRAM buffer;
+  :Update write pointer;
+  :Send MSI interrupt to host;
+  :Receive CCIF interrupt from host;
+endwhile (no)
+stop
+
 @enduml

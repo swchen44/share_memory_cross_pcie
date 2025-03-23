@@ -53,37 +53,56 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "dram_buffer.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-// Declare the EMI writer and reader functions
-extern void emi_writer_init_dram_buffer();
-extern bool emi_writer_write_data_to_dram(uint8_t data);
-extern void send_msi_interrupt();
-extern void receive_ccif_interrupt();
-extern bool has_more_data();
-extern int emi_writer_main();
+#include "emi_writer.h"
+#include "emi_reader.h"
 
-extern void emi_reader_init_dram_buffer();
-extern bool emi_reader_read_data_from_dram(uint8_t *data);
-extern void emi_reader_send_ccif_interrupt();
-extern void emi_reader_receive_msi_interrupt();
-extern int emi_reader_main();
+#define MAIN_DRAM_BUFFER_SIZE 4096
+uint8_t main_main_shared_buffer[MAIN_DRAM_BUFFER_SIZE];
 
 int main() {
-    // Initialize the EMI writer and reader
-    printf("Initializing EMI writer...\n");
-    emi_writer_init_dram_buffer();
+    // Initialize the EMI writer and reader with the shared buffer
+    emi_writer_init(main_main_shared_buffer, MAIN_DRAM_BUFFER_SIZE);
+    emi_reader_init(main_main_shared_buffer, MAIN_DRAM_BUFFER_SIZE);
 
-    printf("Initializing EMI reader...\n");
-    emi_reader_init_dram_buffer();
+    // Example data to write
+    uint8_t data_to_write[1024];
+    for (int i = 0; i < 1024; ++i) {
+        data_to_write[i] = i % 256;
+    }
 
-    printf("Starting EMI writer...\n");
-    emi_writer_main();
+    // Write data using EMI writer
+    size_t bytes_written = emi_writer_write(data_to_write, sizeof(data_to_write));
+    printf("Main: EMI Writer wrote %zu bytes to the buffer.\n", bytes_written);
+    emi_writer_send_msi_interrupt(); // Simulate interrupt
 
-    printf("Starting EMI reader...\n");
-    emi_reader_main();
+    // Read data using EMI reader
+    uint8_t data_read[1024];
+    size_t bytes_read = emi_reader_read(data_read, sizeof(data_read));
+    printf("Main: EMI Reader read %zu bytes from the buffer.\n", bytes_read);
+    emi_reader_send_ccif_interrupt(); // Simulate interrupt
 
-    printf("EMI simulation complete.\n");
+    // Basic check: Did we read what we wrote?
+    if (bytes_written == bytes_read) {
+        bool match = true;
+        for (size_t i = 0; i < bytes_read; ++i) {
+            if (data_to_write[i] != data_read[i]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            printf("Main: Data read matches data written!\n");
+        } else {
+            printf("Main: Data mismatch between written and read data!\n");
+        }
+    } else {
+        printf("Main: Bytes written and bytes read do not match!\n");
+    }
 
     return 0;
 }

@@ -1,29 +1,22 @@
 @startuml
-title PCIE Slave to Host Data Transfer Sequence Diagram
+title EMI Writer Sequence Diagram
 
-participant Slave as PCIE Slave
-participant Host as PCIE Host
-participant DRAM
+participant EMIWriter
+participant DRAMBuffer
+participant PCIEHost
 
-Slave -> DRAM: Write Data
-Slave -> Slave: Update Write Pointer
-Slave -> Host: MSI Interrupt
-activate Host
-Host -> DRAM: Read Data
-Host -> Host: Update Read Pointer
-Host -> Host: Check for More Data
-alt More Data
-    Host -> Slave: CCIF Interrupt
-    deactivate Host
-    Slave -> Slave: Check for More Data to Send
-    alt More Data to Send
-        Slave -> DRAM: Write Data
-    else No More Data to Send
-        stop
-    end
-else No More Data
-    deactivate Host
-    stop
+activate EMIWriter
+EMIWriter -> DRAMBuffer: Initialize DRAM buffer
+loop More data
+    EMIWriter -> DRAMBuffer: Write data
+    activate DRAMBuffer
+    DRAMBuffer -->> EMIWriter: Update write pointer
+    deactivate DRAMBuffer
+    EMIWriter -> PCIEHost: Send MSI interrupt
+    activate PCIEHost
+    PCIEHost -->> EMIWriter: Receive CCIF interrupt
+    deactivate PCIEHost
 end
+deactivate EMIWriter
 
 @enduml

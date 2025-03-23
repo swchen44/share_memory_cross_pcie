@@ -1,30 +1,75 @@
 #include "gtest/gtest.h"
-#include "dram_buffer.h"
-#include "emi_writer.c"
-#include "emi_reader.c"
+#include "emi_writer.h"
+#include "emi_reader.h"
 
-TEST(DRAMBufferTest, WriteAndReadData) {
-    emi_writer_init_dram_buffer();
+#define TEST_BUFFER_SIZE 4096
 
-    uint8_t data_to_write = 10;
-    ASSERT_TRUE(emi_writer_write_data_to_dram(data_to_write));
+TEST(EMIWriterTest, WriteAndRead) {
+    uint8_t test_test_buffer[TEST_BUFFER_SIZE];
+    emi_writer_init(test_test_buffer, TEST_BUFFER_SIZE);
+    emi_reader_init(test_test_buffer, TEST_BUFFER_SIZE);
 
-    uint8_t data_read;
-    ASSERT_TRUE(emi_reader_read_data_from_dram(&data_read));
+    uint8_t write_data[] = {1, 2, 3, 4, 5};
+    size_t write_len = sizeof(write_data);
 
-    ASSERT_EQ(data_to_write, data_read);
+    size_t written = emi_writer_write(write_data, write_len);
+    ASSERT_EQ(written, write_len);
+
+    uint8_t read_data[5];
+    size_t read_len = sizeof(read_data);
+    size_t total_read = 0;
+    while (total_read < write_len) {
+        size_t read = emi_reader_read(read_data + total_read, read_len - total_read);
+        if (read == 0) break;
+        total_read += read;
+    }
+
+    ASSERT_EQ(total_read, write_len);
+    ASSERT_EQ(memcmp(write_data, read_data, write_len), 0);
 }
 
-TEST(DRAMBufferTest, BufferFull) {
-    emi_writer_init_dram_buffer();
+TEST(EMIWriterTest, WriteMoreThanRead) {
+    uint8_t test_test_buffer[TEST_BUFFER_SIZE];
+    emi_writer_init(test_test_buffer, TEST_BUFFER_SIZE);
+    emi_reader_init(test_test_buffer, TEST_BUFFER_SIZE);
 
-    // Set read_ptr to 0
-    emi_writer_shared_dram.read_ptr = 0;
-    emi_writer_shared_dram.write_ptr = DRAM_BUFFER_SIZE - 1;
+    uint8_t write_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    size_t write_len = sizeof(write_data);
 
-    // Try to write one more byte, it should fail
-    uint8_t data_to_write = 10;
-    ASSERT_FALSE(emi_writer_write_data_to_dram(data_to_write));
+    size_t written = emi_writer_write(write_data, write_len);
+    ASSERT_EQ(written, write_len);
+
+    uint8_t read_data[5];
+    size_t read_len = sizeof(read_data);
+    size_t read = emi_reader_read(read_data, read_len);
+
+    ASSERT_EQ(read, read_len);
+    ASSERT_EQ(memcmp(write_data, read_data, read_len), 0);
+}
+
+TEST(EMIWriterTest, BufferWrapAround) {
+    uint8_t test_test_buffer[10];
+    size_t buffer_size = sizeof(test_test_buffer);
+    emi_writer_init(test_test_buffer, buffer_size);
+    emi_reader_init(test_test_buffer, buffer_size);
+
+    // Fill the buffer
+    uint8_t initial_data[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t initial_written = emi_writer_write(initial_data, sizeof(initial_data));
+    uint8_t read_data[8];
+    size_t initial_read = emi_reader_read(read_data, sizeof(read_data));
+
+    // Write new data that wraps around
+    uint8_t write_data[] = {9, 10, 11};
+    emi_writer_write(write_data, sizeof(write_data));
+
+    uint8_t read_data2[3];
+    size_t wrap_read = emi_reader_read(read_data2, sizeof(read_data2));
+
+    ASSERT_EQ(wrap_read, sizeof(read_data2));
+    ASSERT_EQ(read_data2[0], 9);
+    ASSERT_EQ(read_data2[1], 10);
+    ASSERT_EQ(read_data2[2], 11);
 }
 
 int main(int argc, char **argv) {

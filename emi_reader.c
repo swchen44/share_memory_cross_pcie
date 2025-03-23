@@ -29,72 +29,85 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "dram_buffer.h"
+#include "emi_reader.h"
+#include "emi_writer.h"
 
-// Declare the global variable for the DRAM buffer (shared with emi_writer.c)
-extern dram_buffer_t emi_writer_shared_dram;
+// Global variable for the DRAM buffer
+extern emi_writer_emi_writer_dram_buffer_t emi_writer_shared_dram;
 
-// Function to initialize the DRAM buffer (in case it's needed on the host side)
-void emi_reader_init_dram_buffer() {
+// Function to initialize the DRAM buffer
+void emi_reader_init(uint8_t* buffer, size_t buffer_size) {
+    emi_writer_shared_dram.buffer = buffer;
+    emi_writer_shared_dram.buffer_size = buffer_size;
+    emi_writer_shared_dram.write_ptr = 0;
+    emi_writer_shared_dram.read_ptr = 0;
+    emi_writer_shared_dram.data_available = false;
 }
 
 // Function to read data from the DRAM buffer
-bool emi_reader_read_data_from_dram(uint8_t *data) {
-    // Check if the buffer is empty
-    if (emi_writer_shared_dram.read_ptr == emi_writer_shared_dram.write_ptr) {
-        fprintf(stderr, "DRAM buffer is empty!\n");
-        return false;
+size_t emi_reader_read(uint8_t* data, size_t max_len) {
+    size_t bytes_read = 0;
+
+    // Check if the buffer is valid
+    if (!emi_writer_shared_dram.buffer || emi_writer_shared_dram.buffer_size == 0) {
+        fprintf(stderr, "EMI Reader: DRAM buffer is not initialized!\\n");
+        return 0;
     }
 
-    // Read data from the buffer
-    *data = emi_writer_shared_dram.buffer[emi_writer_shared_dram.read_ptr];
+    // Check if there is data available in the buffer
+    while (bytes_read < max_len) {
+        if (emi_writer_shared_dram.read_ptr == emi_writer_shared_dram.write_ptr && !emi_writer_shared_dram.data_available) {
+            fprintf(stderr, "EMI Reader: DRAM buffer is empty!\\n");
+            break;
+        }
 
-    // Update the read pointer
-    emi_writer_shared_dram.read_ptr = (emi_writer_shared_dram.read_ptr + 1) % DRAM_BUFFER_SIZE;
+        // Read data from the buffer
+	if(emi_writer_shared_dram.buffer && emi_writer_shared_dram.read_ptr < emi_writer_shared_dram.buffer_size) {
+        data[bytes_read] = emi_writer_shared_dram.buffer[emi_writer_shared_dram.read_ptr];
+        emi_writer_shared_dram.read_ptr = (emi_writer_shared_dram.read_ptr + 1) % emi_writer_shared_dram.buffer_size;
+        bytes_read++;
+	} else {
+	    fprintf(stderr, "EMI Reader: Invalid read pointer!\\n");
+	    break;
+	}
+    }
 
     // Check if the buffer is now empty
-    if (emi_writer_shared_dram.read_ptr == emi_writer_shared_dram.write_ptr) {
+    if (emi_writer_shared_dram.read_ptr == emi_writer_shared_dram.write_ptr && !emi_writer_shared_dram.data_available) {
+        emi_writer_shared_dram.data_available = false;
+    } else {
         emi_writer_shared_dram.data_available = false;
     }
 
-    return true;
+    return bytes_read;
 }
 
 // Function to simulate sending a CCIF interrupt to the slave
-void emi_reader_send_ccif_interrupt() {
-    printf("Sending CCIF interrupt to the slave...\n");
+void emi_reader_send_ccif_interrupt(void) {
+    printf("EMI Reader: Sending CCIF interrupt to the slave...\\n");
     // In a real system, this would involve writing to a specific register
     // to trigger the CCIF interrupt.
 }
 
 // Function to simulate receiving an MSI interrupt from the slave
-void emi_reader_receive_msi_interrupt() {
-    printf("Receiving MSI interrupt from the slave...\n");
+void emi_reader_receive_msi_interrupt(void) {
+    printf("EMI Reader: Receiving MSI interrupt from the slave...\\n");
     // In a real system, this would involve reading a specific register
     // to detect the CCIF interrupt.
 }
+#ifdef EMI_READER_TEST
+int main() {
+    // Example usage
+    uint8_t buffer[4096]; // Example buffer
+    emi_reader_init(buffer, sizeof(buffer));
 
-int emi_reader_main() {
-    // Initialize the DRAM buffer (optional, if the host also needs to write)
-    emi_reader_init_dram_buffer();
+    uint8_t data[1024];
+    size_t bytes_read = emi_reader_read(data, sizeof(data));
+    printf("EMI Reader: Read %zu bytes from DRAM buffer.\\n", bytes_read);
 
-    // Simulate receiving MSI interrupts and reading data from the DRAM buffer
-    for (int i = 0; i < 10; ++i) {
-        // Simulate receiving an MSI interrupt from the slave
-        emi_reader_receive_msi_interrupt();
-
-        // Read data from the DRAM buffer
-        uint8_t data;
-        if (emi_reader_read_data_from_dram(&data)) {
-            printf("Read data %d from DRAM buffer.\n", data);
-
-            // Send a CCIF interrupt to the slave
-            emi_reader_send_ccif_interrupt();
-        } else {
-            // Handle buffer empty condition
-            printf("Failed to read data from DRAM buffer (buffer empty).\n");
-        }
-    }
+    emi_reader_send_ccif_interrupt();
+    emi_reader_receive_msi_interrupt();
 
     return 0;
 }
+#endif

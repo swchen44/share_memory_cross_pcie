@@ -51,4 +51,12 @@ make test
 
 ## License
 
-This project is licensed under the BSD License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the BSD 2-Clause License. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgements
+
+*   This project was inspired by the need for efficient data transfer between PCIE devices.
+
+## Author
+
+Your Name or Organization

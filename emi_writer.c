@@ -29,86 +29,104 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "dram_buffer.h"
+#include "emi_writer.h"
+
+// Define the unit size for data transfer (default 4096 bytes)
+#ifndef EMI_WRITER_UNIT_SIZE
+#define EMI_WRITER_UNIT_SIZE 4096
+#endif
 
 // Global variable for the DRAM buffer
-dram_buffer_t emi_writer_shared_dram;
+emi_writer_emi_writer_dram_buffer_t emi_writer_shared_dram;
 
 // Function to initialize the DRAM buffer
-void emi_writer_init_dram_buffer() {
+void emi_writer_init(uint8_t* buffer, size_t buffer_size) {
+    emi_writer_shared_dram.buffer = buffer;
+    emi_writer_shared_dram.buffer_size = buffer_size;
     emi_writer_shared_dram.write_ptr = 0;
     emi_writer_shared_dram.read_ptr = 0;
     emi_writer_shared_dram.data_available = false;
 }
 
 // Function to write data to the DRAM buffer
-bool emi_writer_write_data_to_dram(uint8_t data) {
-    // Check if the buffer is full
-    if ((emi_writer_shared_dram.write_ptr + 1) % DRAM_BUFFER_SIZE == emi_writer_shared_dram.read_ptr) {
-        fprintf(stderr, "DRAM buffer is full!\n");
-        return false;
+size_t emi_writer_write(const uint8_t* data, size_t data_len) {
+    size_t bytes_written = 0;
+
+    // Check if the buffer is valid
+    if (emi_writer_shared_dram.buffer == NULL || emi_writer_shared_dram.buffer_size == 0) {
+        fprintf(stderr, "EMI Writer: DRAM buffer is not initialized!\n");
+        return 0;
     }
 
-    // Write data to the buffer
-    emi_writer_shared_dram.buffer[emi_writer_shared_dram.write_ptr] = data;
+    // Check if there is enough space in the buffer
+    while (bytes_written < data_len) {
+        size_t available_space = 0;
+        if (emi_writer_shared_dram.write_ptr >= emi_writer_shared_dram.read_ptr) {
+            available_space = emi_writer_shared_dram.buffer_size - emi_writer_shared_dram.write_ptr + emi_writer_shared_dram.read_ptr;
+        } else {
+            available_space = emi_writer_shared_dram.read_ptr - emi_writer_shared_dram.write_ptr;
+        }
 
-    // Update the write pointer
-    emi_writer_shared_dram.write_ptr = (emi_writer_shared_dram.write_ptr + 1) % DRAM_BUFFER_SIZE;
+        if (available_space <= 1) {
+            fprintf(stderr, "EMI Writer: DRAM buffer is full!\n");
+            break;
+        }
+
+        size_t write_size = (data_len - bytes_written) > (available_space - 1) ? (available_space - 1) : (data_len - bytes_written);
+
+        // Write data to the buffer
+        for (size_t i = 0; i < write_size; ++i) {
+            emi_writer_shared_dram.buffer[emi_writer_shared_dram.write_ptr] = data[bytes_written + i];
+            emi_writer_shared_dram.write_ptr = (emi_writer_shared_dram.write_ptr + 1) % emi_writer_shared_dram.buffer_size;
+        }
+
+        bytes_written += write_size;
+    }
 
     // Set the data available flag
     emi_writer_shared_dram.data_available = true;
 
-    return true;
+    return bytes_written;
 }
 
 // Function to simulate sending an MSI interrupt to the host
-void send_msi_interrupt() {
-    printf("Sending MSI interrupt to the host...\n");
+void emi_writer_send_msi_interrupt(void) {
+    printf("EMI Writer: Sending MSI interrupt to the host...\n");
     // In a real system, this would involve writing to a specific register
     // to trigger the MSI interrupt.
 }
 
 // Function to simulate receiving a CCIF interrupt from the host
-void receive_ccif_interrupt() {
-    printf("Receiving CCIF interrupt from the host...\n");
+void emi_writer_receive_ccif_interrupt(void) {
+    printf("EMI Writer: Receiving CCIF interrupt from the host...\n");
     // In a real system, this would involve reading a specific register
     // to detect the CCIF interrupt.
 }
 
 // Function to check if there is more data to send
-bool has_more_data() {
+bool emi_writer_has_more_data(void) {
     // This is a placeholder. In a real system, this would involve
     // checking a data source to see if there is more data available.
     return true;
 }
 
-int emi_writer_main() {
-    // Initialize the DRAM buffer
-    emi_writer_init_dram_buffer();
+#ifdef EMI_WRITER_TEST
+int main() {
+    // Example usage
+    uint8_t buffer[4096]; // Example buffer
+    emi_writer_init(buffer, sizeof(buffer));
 
-    // Simulate writing data to the DRAM buffer and sending interrupts
-    for (int i = 0; i < 20; ++i) {
-        // Check if there is more data to send
-        if (!has_more_data()) {
-            printf("No more data to send.\n");
-            break;
-        }
-
-        // Write data to the DRAM buffer
-        uint8_t data = i + 1; // Example data
-        if (emi_writer_write_data_to_dram(data)) {
-            printf("Wrote data %d to DRAM buffer.\n", data);
-
-            // Send an MSI interrupt to the host
-            send_msi_interrupt();
-
-            // Simulate receiving a CCIF interrupt from the host
-            receive_ccif_interrupt();
-        } else {
-            // Handle buffer full condition
-            fprintf(stderr, "Failed to write data %d to DRAM buffer (buffer full).\n", data);
-        }
+    uint8_t data[1024];
+    for (int i = 0; i < 1024; ++i) {
+        data[i] = i % 256;
     }
+
+    size_t bytes_written = emi_writer_write(data, sizeof(data));
+    printf("EMI Writer: Wrote %zu bytes to DRAM buffer.\n", bytes_written);
+
+    emi_writer_send_msi_interrupt();
+    emi_writer_receive_ccif_interrupt();
 
     return 0;
 }
+#endif
