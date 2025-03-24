@@ -16,9 +16,9 @@
 ## module 有初始化init api, 和uninit api
 ## module 有 doxygen 格式註解，以產生文件
 # 實作參考，可額外再加其它實作，符合以上需求
-## 寫一個 emi_writer.c 模組 c code, buffer address 由caller 提供, 此module有init, caller 傳作buffler address, size ，提供write byte 和block api 可write多個block，block大小是define 定義預設4096 bytes, 一定是2的冪次
-## 寫一個 emi_reader.c 模組 c code, buffer address 由caller 提供, 此module有init, caller 傳作buffler address, size ，提供read byte和block 可read多個block, block大小是define, 定義預設4096 bytes, 一定是2的冪次
-## 寫一個 emi_data_buffer.h 模組, 定義說明data memory 的header structure, 至少有read address pointer (64 bits), write address pointer (64bits), max size (32bits), magic number用來檢查是否被蓋 (32bits) 
+## 寫一個 emi_writer.c 模組 c code, buffer address 由caller 提供, 此module有init API, caller 傳作buffler address, size ，提供write byte API 和block 可write多個block API，block大小是define 定義預設4096 bytes, 一定是2的冪次
+## 寫一個 emi_reader.c 模組 c code, buffer address 由caller 提供, 此module有init API, caller 傳作buffler address, size ，提供read byte API和block 可read多個block API, block大小是define, 定義預設4096 bytes, 一定是2的冪次
+## 寫一個 emi_data_buffer.h 模組, 提供emi writer, emi reader include, 其定義說明data memory 的header structure, 至少有read address pointer (64 bits), write address pointer (64bits), max size (32bits), magic number用來檢查是否被蓋 (32bits) 
 ## 寫一個 main.c，給一個global buffer, 大小為32 kbytes, emi_writter, emi_reader共用此global buffer，把address傳給 emi_writter, emi_reader 模組, 模擬以上功能
 ## 加入Makefile, 使用clang, asan, 和 gtest , 可compile和unit test 以上module
 ## 修改 README.md, 內容像是一般open source 在github 的說明
