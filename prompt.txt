@@ -11,6 +11,7 @@
 # 模組化
 ## module的檔名是模組名稱
 ## module有public header, 提供caller include
+## module如果說有private header header, header檔名加上local
 ## module的所有global symbol, define, struct, enum, preprocessor 都要加上module name 作prefix, 
 ## module 有初始化init api, 和uninit api
 ## module 有 doxygen 格式註解，以產生文件
