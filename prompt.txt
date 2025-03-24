@@ -3,22 +3,23 @@
 # 照原儘量來檔案修改
 # 使用 BSD license
 # 請設計以下功能，使用markdown 說明設計, plantuml 畫流程圖，時序圖，html with mermaid的畫流程圖，時序圖
-## 1. 功能為emi writer 要data給emi reader, 利用DRAM memory 佔放buffer
-## 2. 有一個DRAM memory buffer，可以被hemi reader 讀, 也可以被emi writer 寫, 
-## 3. 當memory 被 emi writer  寫資資料後， 更新write pointer，emi writer利用PCIE MSI interrupt emi reader, 
-## 4. 當emi reader 收到interrupt, 讀write pointer 和 read pointer 從DRAM memory buffer 後，判斷read pointer 和 write pointer是否有資料，全部讀取後，並更新read potiner，host 利用CCIF interrupt 通知 emi writer
+## 1. 功能為emi writer 要data給emi reader, 利用data memory 交換資料
+## 2. 有一個data memory，可以被emi reader 讀, 也可以被emi writer 寫, 
+## 3. data memory 被 emi writer  寫資資料後， 更新write pointer，emi writer利用PCIE MSI interrupt emi reader, 
+## 4. 當emi reader 收到interrupt, 讀write pointer 和 read pointer 從data memory 後，判斷read pointer 和 write pointer是否有資料，全部讀取後，並更新read potiner，host 利用CCIF interrupt 通知 emi writer
 ## 5. emi writer 若還有新進資料資料，就繼續上面第3步驟
 # 模組化
 ## module的檔名是模組名稱
 ## module有public header, 提供caller include
 ## module的所有global symbol, define, struct, enum, preprocessor 都要加上module name 作prefix, 
 ## module 有初始化init api, 和uninit api
-## module 會提doxygen 格式註解，以產生文件
+## module 有 doxygen 格式註解，以產生文件
 # 實作參考，可額外再加其它實作，符合以上需求
 ## 寫一個 emi_writer.c 模組 c code, buffer address 由caller 提供, 此module有init, caller 傳作buffler address, size ，提供write byte 和block api 可write多個block，block大小是define 定義預設4096 bytes, 一定是2的冪次
 ## 寫一個 emi_reader.c 模組 c code, buffer address 由caller 提供, 此module有init, caller 傳作buffler address, size ，提供read byte和block 可read多個block, block大小是define, 定義預設4096 bytes, 一定是2的冪次
-## 寫一個 emi_data_buffer.h 模組, 說明data buffer 的header, 至少有read address, write address, address bitwith 為32 bites
+## 寫一個 emi_data_buffer.h 模組, 定義說明data memory 的header structure, 至少有read address pointer (64 bits), write address pointer (64bits), max size (32bits), magic number用來檢查是否被蓋 (32bits) 
 ## 寫一個 main.c，給一個global buffer, 大小為32 kbytes, emi_writter, emi_reader共用此global buffer，把address傳給 emi_writter, emi_reader 模組, 模擬以上功能
 ## 加入Makefile, 使用clang, asan, 和 gtest , 可compile和unit test 以上module
 ## 修改 README.md, 內容像是一般open source 在github 的說明
+## 程式碼 doxygen 格式註解，以產生文件
 ## make test 需要pass
